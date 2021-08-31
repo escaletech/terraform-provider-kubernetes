@@ -55,9 +55,9 @@ require (
 	github.com/zclconf/go-cty v1.8.4
 	go.starlark.net v0.0.0-20210406145628-7a1108eaa012 // indirect
 	golang.org/x/mod v0.4.2
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
-	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect
+	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78 // indirect
+	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e // indirect
 	golang.org/x/term v0.0.0-20210406210042-72f3dc4e9b72 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.1-0.20210302220138-2ac05c832e1a // indirect
