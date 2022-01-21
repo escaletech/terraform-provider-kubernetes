@@ -1,3 +1,71 @@
+## 2.7.1 (December 06, 2021)
+
+BUG FIXES:
+* Fix type-morphing of Map into Map (#1521)
+
+## 2.7.0 (November 30, 2021)
+
+IMPROVEMENTS:
+* Add support for storage/v1
+* Add support for certificates/v1
+* Add support for networking/v1
+* Add support for policy/v1
+* Add `completion_mode` to job spec 
+* Improve performance of `kubernetes_manifest` by reducing amount of API calls
+
+BUG FIXES:
+* Fix crash when container env block is empty 
+* Fix invalid allowedHostPaths PodSecurityPolicy patch 
+* Fix handling of "null" values on fields of `kubernetes_manifest` (#1478)
+
+This release introduces version suffixes to the names of resources and datasources. See our [documentation page](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/guides/versioned-resources) for more details on this convention and the motivation behind it.   
+
+## 2.6.1 (October 22, 2021)
+
+BUG FIXES:
+  * Fix import ID syntax in manifest import docs
+  * Tolerate unknown values in "env" and "exec" provider attributes
+  * Remove "beta" designation of the kubernetes_manifest from documentation
+
+## 2.6.0 (October 19, 2021)
+
+IMPROVEMENTS:
+* kubernetes_manifest is now GA and enabled by default
+
+BUG FIXES:
+* kubernetes_manifest now correctly handles empty blocks as attribute values (#1352)
+* kubernetes_manifest now correctly handles multiple CRDs with different number of schema versions (#1460)
+
+## 2.5.1 (October 14, 2021)
+
+IMPROVEMENTS:
+* Allow setting kubernetes_job parallelism to zero (#1334)
+* Add kubernetes_ingress_class resource (#1236)
+* Add immutable field to kubernetes_secret (#1280)
+* Add behavior field to horizontal_pod_autoscaler (#1030)
+* Add proxy_url attribute to provider configuration block (#1441)
+
+BUG FIXES:
+* Always generate standard ObjectMeta for CRD types (#1418)
+* Fix importing kubernetes_manifest resources (#1440)
+* Fix documentation example for field_manager block (#1410)
+* Fix kubernetes_job "No waiting" documentation example (#1383)
+* Fix docs formatting for kubernetes_secret (#1434)
+
+## 2.5.0 (September 14, 2021)
+
+IMPROVEMENTS:
+* Timeouts block on `kubernetes_manifest`
+* `kubernetes_manifest` supports setting field_manager name and "force" mode
+* `kubernetes_manifest` checks that resource exists before trying to create
+* `kubernetes_manifest` supports "computed" attributtes
+* `kubernetes_manifest` supports import operations
+
+BUG FIXES:
+* Fix typo in kubernetes_manifest documentation
+* Document that kubernetes_manifest must be enabled in the provider block.
+* Docs for ingress_class_name in kubernetes_ingress
+
 ## 2.4.1 (August 03, 2021)
 
 HOTFIX:

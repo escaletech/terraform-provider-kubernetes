@@ -1,4 +1,5 @@
 ---
+subcategory: "extensions/v1beta1"
 layout: "kubernetes"
 page_title: "Kubernetes: kubernetes_ingress"
 description: |-
@@ -60,6 +61,7 @@ The following arguments are supported:
 * `backend` - Backend defines the referenced service endpoint to which the traffic will be forwarded. See `backend` block attributes below.
 * `rule` - A list of host rules used to configure the Ingress. If unspecified, or no rule matches, all traffic is sent to the default backend. See `rule` block attributes below.
 * `tls` - TLS configuration. Currently the Ingress only supports a single TLS port, 443. If multiple members of this list specify different hosts, they will be multiplexed on the same port according to the hostname specified through the SNI TLS extension, if the ingress controller fulfilling the ingress supports SNI. See `tls` block attributes below.
+* `ingress_class_name` - The name of the IngressClass cluster resource. The associated IngressClass defines which controller will implement the resource. This replaces the deprecated `kubernetes.io/ingress.class` annotation. For backwards compatibility, when that annotation is set, it must be given precedence over this field.
 
 ### `backend`
 

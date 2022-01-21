@@ -13,21 +13,6 @@ Once applied, the `object` attribute contains the state of the resource as retur
 
 ~> A minimum Terraform version of 0.14.8 is required to use this resource.
 
-~> This resource is currently in beta, and should not be used in production. To use it, you must enable it in the provider block.
-
-How to enable the experiment:
-
-```hcl
-provider "kubernetes" {
-  experiments {
-    manifest_resource = true
-  }
-
-  config_path = "~/.kube/config"
-}
-```
-
-
 ### Before you use this resource
 
 * This resource requires API access during planning time. This means the cluster has to be accessible at plan time and thus cannot be created in the same apply operation. We recommend only using this resource for custom resources or resources not yet fully supported by the provider.
@@ -98,6 +83,25 @@ resource "kubernetes_manifest" "test-crd" {
 }
 ```
 
+## Importing existing Kubernetes resources as `kubernetes_manifest`
+
+Objects already present in a Kubernetes cluster can be imported into Terraform to be managed as `kubernetes_manifest` resources. Follow these steps to import a resource:
+
+### Extract the resource from Kubernetes and transform it into Terraform configuration
+
+```
+kubectl get secrets sample -o yaml | tfk8s --strip -o sample.tf
+```
+
+### Import the resource state from the cluster
+
+```
+terraform import kubernetes_manifest.secret_sample "apiVersion=v1,kind=Secret,namespace=default,name=sample"
+```
+
+Note the import ID as the last argument to the import command. This ID points Terraform at which Kubernetes object to read when importing.
+It should be constructed with the following syntax: `"apiVersion=<string>,kind=<string>,[namespace=<string>,]name=<string>"`
+
 ## Using `wait_for` to block create and update calls
 
 The `kubernetes_manifest` resource supports the ability to block create and update calls until a field is set or has a particular value by specifying the `wait_for` attribute. This is useful for when you create resources like Jobs and Services when you want to wait for something to happen after the resource is created by the API server before Terraform should consider the resource created.
@@ -126,20 +130,83 @@ resource "kubernetes_manifest" "test" {
       "status.readyReplicas" = "2"
     }
   }
-}
 
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "30s"
+  }
+}
 ```
 
+## Configuring `field_manager`
+
+The `kubernetes_manifest` exposes configuration of the field manager through the optional `field_manager` block.
+
+```hcl
+resource "kubernetes_manifest" "test" {
+  provider = kubernetes-alpha
+
+  manifest = {
+    // ...
+  }
+
+  field_manager {
+    # set the name of the field manager
+    name = "myteam"
+
+    # force field manager conflicts to be overridden
+    force_conflicts = true
+  }
+}
+```
+
+## Computed fields
+
+When setting the value of an field in configuration, Terraform will check that the same value is returned after the apply operation. This ensures that the actual configuration requested by the user is successfully applied. In some cases, with the Kubernetes API this is not the desired behavior. Particularly when using mutating admission controllers, there is a chance that the values configured by the user will be modified by the API. 
+
+To accommodate this, the `kubernetes_manifest` resources allows defining so-called "computed" fields. When an field is defined as "computed" Terraform will allow the final value stored in state after `apply` as returned by the API to be different than what the user requested. 
+
+The most common example of this is  `metadata.annotations`. In some cases, the API will add extra annotations on top of the ones configured by the user. Unless the field is declared as "computed" Terraform will throw an error signaling that the state returned by the 'apply' operation is inconsistent with the value defined in the 'plan'.
+
+ To declare an field as "computed" add its full field path to the `computed_fields` field under the respective `kubernetes_manifest` resource. For example, to declare the "metadata.labels" field as "computed", add the following:
+
+```
+resource "kubernetes_manifest" "test-ns" {
+  manifest = {
+    ...
+  }
+
+  computed_fields = ["metadata.labels"]
+ }
+```
+
+**IMPORTANT**: By default, `metadata.labels` and `metadata.annotations` are already included in the list. You don't have to set them explicitly in the `computed_fields` list. To turn off these defaults, set the value of `computed_fields` to an empty list or a concrete list of other fields. For example `computed_fields = []`.
+
+The syntax for the field paths is the same as the one used in the `wait_for` block.
 ## Argument Reference
 
 The following arguments are supported:
 
+- `computed_fields` - (Optional) List of paths of fields to be handled as "computed". The user-configured value for the field will be overridden by any different value returned by the API after apply.
 - `manifest` (Required) An object Kubernetes manifest describing the desired state of the resource in HCL format.
 - `object` (Optional) The resulting resource state, as returned by the API server after applying the desired state from `manifest`.
 - `wait_for` (Optional) An object which allows you configure the provider to wait for certain conditions to be met. See below for schema. 
+- `field_manager` (Optional) Configure field manager options. See below.
 
 ### `wait_for`
 
 #### Arguments
 
 - **fields** (Required) A map of fields and a corresponding regular expression with a pattern to wait for. The provider will wait until the field matches the regular expression. Use `*` for any value. 
+
+### `field_manager`
+
+#### Arguments
+
+- **name** (Optional) The name of the field manager to use when applying the resource. Defaults to `Terraform`.
+- **force_conflicts** (Optional) Forcibly override any field manager conflicts when applying the resource. Defaults to `false`.
+
+### `timeouts`
+
+See [Operation Timeouts](https://www.terraform.io/docs/language/resources/syntax.html#operation-timeouts)

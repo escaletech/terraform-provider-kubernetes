@@ -45,34 +45,16 @@ func resolveSchemaRef(ref *openapi3.SchemaRef, defs map[string]*openapi3.SchemaR
 			Type: "",
 		}
 		return &t, nil
-	case "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1beta1.CustomResourceSubresourceStatus":
-		t := openapi3.Schema{
-			Type: "object",
-			AdditionalProperties: &openapi3.SchemaRef{
-				Value: &openapi3.Schema{
-					Type: "string",
-				},
-			},
-		}
-		return &t, nil
-	case "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceSubresourceStatus":
-		t := openapi3.Schema{
-			Type: "object",
-			AdditionalProperties: &openapi3.SchemaRef{
-				Value: &openapi3.Schema{
-					Type: "string",
-				},
-			},
-		}
-		return &t, nil
 	case "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionSpec":
 		t, err := resolveSchemaRef(nref, defs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve schema: %s", err)
 		}
 		vs := t.Properties["versions"]
-		vs.Value.AdditionalProperties = vs.Value.Items
-		vs.Value.Items = nil
+		if vs.Value.AdditionalProperties == nil && vs.Value.Items != nil {
+			vs.Value.AdditionalProperties = vs.Value.Items
+			vs.Value.Items = nil
+		}
 		return t, nil
 	}
 
@@ -94,11 +76,12 @@ func getTypeFromSchema(elem *openapi3.Schema, stackdepth uint64, typeCache *sync
 	var t tftypes.Type
 
 	// check if type is in cache
-	if herr == nil {
-		if t, ok := typeCache.Load(h); ok {
-			return t.(tftypes.Type), nil
-		}
-	}
+	// HACK: this is temporarily disable to diagnose a cache corruption issue.
+	// if herr == nil {
+	// 	if t, ok := typeCache.Load(h); ok {
+	// 		return t.(tftypes.Type), nil
+	// 	}
+	// }
 	switch elem.Type {
 	case "string":
 		return tftypes.String, nil
@@ -131,7 +114,7 @@ func getTypeFromSchema(elem *openapi3.Schema, stackdepth uint64, typeCache *sync
 				typeCache.Store(h, t)
 			}
 			return t, nil
-		case elem.AdditionalProperties != nil && elem.Items == nil: // "overriden" array - translates to a tftypes.List
+		case elem.AdditionalProperties != nil && elem.Items == nil: // "overriden" array - translates to a tftypes.Tuple
 			it, err := resolveSchemaRef(elem.AdditionalProperties, defs)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve schema for items: %s", err)
@@ -141,9 +124,6 @@ func getTypeFromSchema(elem *openapi3.Schema, stackdepth uint64, typeCache *sync
 				return nil, err
 			}
 			t = tftypes.Tuple{ElementTypes: []tftypes.Type{et}}
-			if herr == nil {
-				typeCache.Store(h, t)
-			}
 			return t, nil
 		}
 

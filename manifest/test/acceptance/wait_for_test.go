@@ -3,18 +3,14 @@
 package acceptance
 
 import (
-	"os"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-provider-kubernetes/manifest/test/helper/kubernetes"
 	tfstatehelper "github.com/hashicorp/terraform-provider-kubernetes/manifest/test/helper/state"
 )
 
 func TestKubernetesManifest_WaitForFields_Pod(t *testing.T) {
-	if os.Getenv("GITHUB_ACTIONS") == "true" {
-		t.Skip("skipping this test for now as it is broken inside GitHub actions") // FIXME
-	}
-
 	name := randName()
 	namespace := randName()
 
@@ -27,7 +23,7 @@ func TestKubernetesManifest_WaitForFields_Pod(t *testing.T) {
 	}()
 
 	k8shelper.CreateNamespace(t, namespace)
-	defer k8shelper.DeleteNamespace(t, namespace)
+	defer k8shelper.DeleteResource(t, namespace, kubernetes.NewGroupVersionResource("v1", "namespaces"))
 
 	tfvars := TFVARS{
 		"namespace": namespace,
